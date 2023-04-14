@@ -1,9 +1,9 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Style is Inmate
 // 
-// idea and gfx : 
-// code : code
-// music : tlf
+// idea and gfx : Goerp
+// code : Case
+// music : TLF
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -67,6 +67,7 @@ start:
 										sty $ffff
 										cli
 
+// show artstudio bitmap
 										ldx #$00
 								!:      lda $3f40,x
 								        sta $0400,x
@@ -89,8 +90,6 @@ start:
 								        bne !-
 
 										jsr setSprites
-
-
 
 inmate:									jmp inmate
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,6 +155,7 @@ IrqShowNoBorder:						sta IrqShowNoBorderAback + 1
 										lda #$ff
 										sta $3fff
 
+										jsr setSprites
 
 										lda #$00
 										sta raster
@@ -171,29 +171,26 @@ IrqShowNoBorderYback:				    ldy #$ff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-// setup sprites locations etc for title page			
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// setup sprites locations for logo in bottom border			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 setSprites:								lda #$00
-										sta spritemulti   	// sprites multi-color mode select
-										sta spritermsb		// sprites 0-7 msb of x coordinate
+										sta spritemulti   			// sprites multi-color mode select
+										sta spritermsb				// sprites 0-7 msb of x coordinate
+										sta spritepr 				// sprite to background display priority
+										sta spriteexpy    			// sprites expand 2x vertical (y)
+										sta spriteexpx    			// sprites expand 2x horizontal (x)
 
 										lda #%11111111
-										sta spriteset		// sprite display enable
-										lda #%00000000	  		
-										sta spritepr 		// sprite to background display priority
-
-										lda #%00000000
-										sta spriteexpy    	// sprites expand 2x vertical (y)
-										sta spriteexpx    	// sprites expand 2x horizontal (x)
+										sta spriteset				// sprite display enable
 
 										ldy #07
 										lda #WHITE
-				!:						sta spritecolors,y    // sprite 0 color
+				!:						sta spritecolors,y 
 										dey
 										bpl !-
-
-										// set sprite memory pointers for main logo sprites
-										ldx #($1e00/64)
+										
+										ldx #$1e00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
 										inx
 										stx 2041
@@ -239,7 +236,6 @@ setSprites:								lda #$00
 										clc
 										adc #24
 										sta sprite6x
-
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
