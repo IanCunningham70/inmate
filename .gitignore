@@ -1,0 +1,12 @@
+entrypoints.*
+sequence.part*
+moncommands
+breakpoints.txt
+bin/*
+*.d64
+*.zip
+.DS_Store
+*.sym
+*.vs
+*.dbg
+*.prg
