@@ -1,22 +1,9 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Style is Inmate
 // 
-// idea and gfx : shaun pearson
+// idea and gfx : 
 // code : code
 // music : tlf
-// help & support : Dano & Anonym
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// memory map 
-// 
-// $080d-$1aff - main code
-// $1b00-$1bff - sprite data
-// $1c00-$17ff - title screen text
-// $2000-$22ff - title screen font
-// $8000-$9e7f - Music
-// $6000-$7fff - picture 1
-// $a000-$ffff - pictures 2,3,4,5
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,6 +76,7 @@ start:
 								        sta $05fe,x
 								        lda $423d,x
 								        sta $06fd,x
+										
 								        lda $4338,x
 								        sta $d800,x
 								        lda $4437,x
@@ -99,6 +87,11 @@ start:
 								        sta $dafd,x
 								        inx
 								        bne !-
+
+										jsr setSprites
+
+
+
 inmate:									jmp inmate
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Play Music"
@@ -160,8 +153,9 @@ IrqShowNoBorder:						sta IrqShowNoBorderAback + 1
 										lda #$13
 										sta screenmode
 
-										lda #$7f
+										lda #$ff
 										sta $3fff
+
 
 										lda #$00
 										sta raster
@@ -185,12 +179,11 @@ setSprites:								lda #$00
 
 										lda #%11111111
 										sta spriteset		// sprite display enable
-										lda #%11111111	  		
+										lda #%00000000	  		
 										sta spritepr 		// sprite to background display priority
 
-										lda #%00001111
+										lda #%00000000
 										sta spriteexpy    	// sprites expand 2x vertical (y)
-										lda #%00001111
 										sta spriteexpx    	// sprites expand 2x horizontal (x)
 
 										ldy #07
@@ -200,7 +193,7 @@ setSprites:								lda #$00
 										bpl !-
 
 										// set sprite memory pointers for main logo sprites
-										ldx #($0c00/64)
+										ldx #($1e00/64)
 										stx 2040
 										inx
 										stx 2041
@@ -214,38 +207,49 @@ setSprites:								lda #$00
 										stx 2045
 										inx
 										stx 2046
-										inx
-										stx 2047
-
 
 										// set sprite screen position for main logo
 
-										ldy #78				// 78
+										ldy #255			// 78
 										sty sprite0y	    // sprite 0 y pos
 										sty sprite1y	    // sprite 1 y pos
 										sty sprite2y	    // sprite 2 y pos
 										sty sprite3y	    // sprite 2 y pos
+										sty sprite4y	    // sprite 2 y pos
+										sty sprite5y	    // sprite 2 y pos
+										sty sprite6y	    // sprite 2 y pos
 
 										lda #108
 										sta sprite0x
 										clc
-										adc #48
+										adc #24
 										sta sprite1x 
 										clc
-										adc #48
+										adc #24
 										sta sprite2x
 										clc
-										adc #48
+										adc #24
 										sta sprite3x
+										clc
+										adc #24
+										sta sprite4x
+										clc
+										adc #24
+										sta sprite5x
+										clc
+										adc #24
+										sta sprite6x
 
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-*=$2000
-.import binary "gfx\style_final_1_light_grey.art"
+										.memblock "style is inmate sprites"
+										*=$1e00
+										.import binary "gfx\text_sprites_6x1.bin"
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "bitmap image"
+										*=$2000
+										.import c64 "gfx\style_final_1_light_grey.art"
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
