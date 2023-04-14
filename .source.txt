@@ -80,6 +80,25 @@ start:
 										sty $ffff
 										cli
 
+										ldx #$00
+								!:      lda $3f40,x
+								        sta $0400,x
+								        lda $403f,x
+								        sta $04ff,x
+								        lda $413e,x
+								        sta $05fe,x
+								        lda $423d,x
+								        sta $06fd,x
+								        lda $4338,x
+								        sta $d800,x
+								        lda $4437,x
+								        sta $d8ff,x
+								        lda $4536,x
+								        sta $d9fe,x
+								        lda $4635,x
+								        sta $dafd,x
+								        inx
+								        bne !-
 inmate:									jmp inmate
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Play Music"
@@ -87,18 +106,9 @@ IrqPlayMusic:							sta IrqPlayMusicAback + 1
 										stx IrqPlayMusicXback + 1
 										sty IrqPlayMusicYback + 1
 
-										lda #$1b
-										sta screenmode
+										jsr music.play					// play selected tune
 
-										jsr music.play		// play selected tune
-
-
-										lda #216						// stop smooth scrolling and change to bitmap mode
-										sta smoothpos
-										lda #%00011000					// point to bitmap data $2000, screen at $0400
-										sta charset
-
-          								lda #$f9
+          								lda #$32
 										sta raster
 										ldx #<IrqShowBitmap
 										ldy #>IrqShowBitmap
@@ -115,19 +125,25 @@ IrqShowBitmap:							sta IrqShowBitmapAback + 1
 										stx IrqShowBitmapXback + 1
 										sty IrqShowBitmapYback + 1
 
+										lda #$1b
 										lda screenmode
-										and #$f7
-										lda screenmode
-
 
 										lda #BLACK						// this will be completed when the picture is drawn. 
-										sta screen
-										lda #WHITE
 										sta border
-										lda #$00
+										lda #DARK_GREY
+										sta screen
+
+								        lda #24
+								        sta charset
+								        lda #$3b
+								        sta screenmode
+								        lda #200
+								        sta smoothpos
+
+										lda #$f9
 										sta raster
-										ldx #<IrqPlayMusic
-										ldy #>IrqPlayMusic
+										ldx #<IrqShowNoBorder
+										ldy #>IrqShowNoBorder
 										stx $fffe
 										sty $ffff
 										inc irqflag
@@ -136,6 +152,31 @@ IrqShowBitmapXback:				      	ldx #$ff
 IrqShowBitmapYback:				       	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "Remove Upper/Lower Border"
+IrqShowNoBorder:						sta IrqShowNoBorderAback + 1
+										stx IrqShowNoBorderXback + 1
+										sty IrqShowNoBorderYback + 1
+
+										lda #$13
+										sta screenmode
+
+										lda #$7f
+										sta $3fff
+
+										lda #$00
+										sta raster
+										ldx #<IrqPlayMusic
+										ldy #>IrqPlayMusic
+										stx $fffe
+										sty $ffff
+										inc irqflag
+IrqShowNoBorderAback:					lda #$ff
+IrqShowNoBorderXback:				    ldx #$ff
+IrqShowNoBorderYback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 // setup sprites locations etc for title page			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 setSprites:								lda #$00
