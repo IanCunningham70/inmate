@@ -190,7 +190,7 @@ setSprites:								lda #$00
 										dey
 										bpl !-
 										
-										ldx #$1e00/64				// set sprite memory pointers for main logo sprites
+										ldx #$0e00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
 										inx
 										stx 2041
@@ -242,7 +242,7 @@ setSprites:								lda #$00
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "style is inmate sprites"
-										*=$1e00
+										*=$0e00
 										.import binary "gfx\text_sprites_6x1.bin"
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "bitmap image"
