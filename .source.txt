@@ -116,7 +116,7 @@ IrqShowBitmap:							sta IrqShowBitmapAback + 1
 										lda #$1b
 										lda screenmode
 
-										lda #BLACK						// this will be completed when the picture is drawn. 
+										lda #BLACK
 										sta border
 										lda #DARK_GREY
 										sta screen
@@ -127,6 +127,11 @@ IrqShowBitmap:							sta IrqShowBitmapAback + 1
 								        sta screenmode
 								        lda #200
 								        sta smoothpos
+
+										jsr SinusMovement
+									
+										jsr FlashSprites
+
 
 										lda #$f9
 										sta raster
@@ -151,9 +156,6 @@ IrqShowNoBorder:						sta IrqShowNoBorderAback + 1
 										lda #$ff
 										sta $3fff
 
-
-										jsr SinusMovement
-
 										ldy #07
 										lda SpriteColor
 				!:						sta spritecolors,y 
@@ -172,9 +174,7 @@ IrqShowNoBorderYback:				    ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "sinus movement"
-SinusMovement:
-
-										ldx sinusCounter
+SinusMovement:							ldx sinusCounter
 										cpx #255
 										bne !+
 
@@ -202,9 +202,36 @@ SinusMovement:
 										adc #24
 										sta sprite6x
 
+										lda #$00
+										ora $d010
+										sta $d010
+
 										inc sinusCounter
 										inc sinusCounter
-										inc sinusCounter
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "flash sprites"
+FlashSprites:							
+										lda FlashDelay
+										sec
+										sbc #$02
+										and #$07
+										sta FlashDelay
+										bcc !+
+										rts
+
+						!:				ldx FlashCounter
+										cpx #6
+										beq !+
+										lda #DARK_GRAY
+										sta SpriteColor
+										inc FlashCounter
+										rts
+						!:
+										lda #WHITE
+										sta SpriteColor
+										lda #$00
+										sta FlashCounter
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 setSprites:								lda #$00
@@ -266,12 +293,13 @@ setSprites:								lda #$00
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 sinusCounter:							.byte $00
-SpriteColor:							.byte YELLOW
+SpriteColor:							.byte DARK_GRAY
+FlashDelay:								.byte $00
+FlashCounter:							.byte $00
 
-										.memblock "sprite sinus"
 										*=$c00
+										.memblock "sprite sinus"
 SinusTable:								
-
 										.byte $68,$69,$69,$6A,$6B,$6B,$6C,$6C,$6D,$6E,$6E,$6F,$70,$70,$71,$71,$72,$73,$73,$74,$74,$75,$75,$76,$76,$77,$77,$78
 										.byte $78,$79,$79,$7A,$7A,$7B,$7B,$7C,$7C,$7C,$7D,$7D,$7E,$7E,$7E,$7F,$7F,$7F,$80,$80,$80,$80,$80,$81,$81,$81,$81,$81
 										.byte $82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$82,$81,$81,$81,$81,$81,$80,$80,$80,$80,$80,$7F
@@ -283,11 +311,11 @@ SinusTable:
 										.byte $56,$56,$57,$57,$58,$58,$59,$59,$5A,$5A,$5B,$5B,$5C,$5C,$5D,$5D,$5E,$5F,$5F,$60,$60,$61,$62,$62,$63,$64,$64,$65
 										.byte $65,$66,$67,$67
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										.memblock "style is inmate sprites"
 										*=$0e00
+										.memblock "style is inmate sprites"
 										.import binary "gfx\text_sprites_6x1.bin"
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										.memblock "bitmap image"
 										*=$2000
+										.memblock "bitmap image"
 										.import c64 "gfx\style_final_1_light_grey.art"
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
