@@ -13,24 +13,21 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 .const ScreenMemory	= $0400							// new screen location
 .const ColourMemory = $d800							// colour ram never changes
-
-.var BitmapScreen	= $3f40 // + ScreenMemory			// bitmap screen data
-.var BitmapColours	= $4328 // + ScreenMemory			// bitmap color data
-
-.var textFlash  = ColourMemory + (40*12)
 .var screen_data = $3f40
 .var colour_data = $4328
-.var BackGroundColour = $4710
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 .var music = LoadSid("sids\SnoopyDrePac.sid")
 .pc = music.location "Music"
 .fill music.size, music.getData(i)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 										* = $0801 "basic line"
 BasicUpstart2(start)
 
-// this is where the code stuff starts ... hopefully it will work
+// this is where the code stuff starts 
 
 										*= $080d "Main Code"
 start:		
@@ -238,7 +235,10 @@ setSprites:								lda #$00
 										sta sprite6x
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+										*=$0c00
+										// Generate a sine curve
+										.fill 256,round(127.5+127.5*sin(toRadians(i*360/256)))
+										
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "style is inmate sprites"
