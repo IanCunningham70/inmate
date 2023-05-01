@@ -30,31 +30,25 @@ BasicUpstart2(start)
 
 										*= $080d "Main Code"
 start:		
-										SetBoth(BLACK)
+
+										lda #$35
+										sta $01
+
+										jsr SpriteCarpet
+
 									
 										lda #00
 										sta $d41f
 										jsr music.init
-
+										
+										//  Final IRQ pointers
 										sei
-										lda #$35
-										sta $01
-										lda #$7f
-										sta $dc0d
-										sta $dd0d
-										lda $dc0d
-										lda $dd0d
 										lda #$81
 										sta irqenable
 										lda #$1b
 										sta screenmode
 										lda #24
 										sta charset
-									
-										lda #$ff
-										sta irqflag
-
-										// 1st IRQ pointers
 										lda #$00
 										sta raster
 										ldx #<IrqPlayMusic
@@ -85,7 +79,7 @@ start:
 								        inx
 								        bne !-
 
-										jsr setSprites
+										jsr SetLogoSprites
 
 inmate:									jmp inmate
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -240,11 +234,11 @@ setSprites:								lda #$00
 										sta spritepr 				// sprite to background display priority
 										sta spriteexpy    			// sprites expand 2x vertical (y)
 										sta spriteexpx    			// sprites expand 2x horizontal (x)
-
 										lda #%11111111
 										sta spriteset				// sprite display enable
-									
-										ldx #$0e00/64				// set sprite memory pointers for main logo sprites
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SetLogoSprites:							ldx #$0e00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
 										inx
 										stx 2041
@@ -292,12 +286,257 @@ setSprites:								lda #$00
 										sta sprite6x
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "sprite carpet - basic fader"
+
+// cover the whole screen with x & y expanded sprites
+// make each ona a differant color for testing
+//
+// animate them when routine is working.
+
+SpriteCarpet:							jsr setSprites
+
+										sei
+										lda #$7f
+										sta $dc0d
+										sta $dd0d
+										lda $dc0d
+										lda $dd0d
+										lda #$1b
+										sta screenmode
+									
+										lda #$ff
+										sta irqflag
+										lda #$81
+										sta irqenable
+
+										lda #$2f
+										sta raster
+										ldx #<SpriteCarpetIRQ
+										ldy #>SpriteCarpetIRQ
+										stx $fffe
+										sty $ffff
+
+										cli
+
+										jsr SetCarpetSprites
+										jsr SpriteCarpetXplot
+
+										lda #$00
+										sta spritemulti   			// sprites multi-color mode select
+										sta spritermsb				// sprites 0-7 msb of x coordinate
+										sta spritepr 				// sprite to background display priority
+										lda #%11111111
+										sta spriteexpy    			// sprites expand 2x vertical (y)
+										sta spriteexpx    			// sprites expand 2x horizontal (x)
+										sta spriteset				// sprite display enable
+
+SpriteCarpetLoop:						jmp *
+
+SpriteCarpetIRQ:						sta SpriteCarpetIRQAback + 1
+										stx SpriteCarpetIRQXback + 1
+										sty SpriteCarpetIRQYback + 1
+
+										ldy #50				// top left hand corner of the screen
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+
+										ldy #07
+				!:						tya
+										sta spritecolors,y 
+										dey
+										bpl !-
+
+										lda #90
+										sta raster
+										ldx #<SpriteCarpetIRQ1
+										ldy #>SpriteCarpetIRQ1
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQAback:					lda #$ff
+SpriteCarpetIRQXback:				    ldx #$ff
+SpriteCarpetIRQYback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ1:						sta SpriteCarpetIRQ1Aback + 1
+										stx SpriteCarpetIRQ1Xback + 1
+										sty SpriteCarpetIRQ1Yback + 1
+
+										ldy #92
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+
+										lda #120
+										sta raster
+										ldx #<SpriteCarpetIRQ2
+										ldy #>SpriteCarpetIRQ2
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQ1Aback:					lda #$ff
+SpriteCarpetIRQ1Xback:				    ldx #$ff
+SpriteCarpetIRQ1Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ2:						sta SpriteCarpetIRQ2Aback + 1
+										stx SpriteCarpetIRQ2Xback + 1
+										sty SpriteCarpetIRQ2Yback + 1
+
+										ldy #92+42
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+
+										lda #160
+										sta raster
+										ldx #<SpriteCarpetIRQ3
+										ldy #>SpriteCarpetIRQ3
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQ2Aback:					lda #$ff
+SpriteCarpetIRQ2Xback:				    ldx #$ff
+SpriteCarpetIRQ2Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ3:						sta SpriteCarpetIRQ3Aback + 1
+										stx SpriteCarpetIRQ3Xback + 1
+										sty SpriteCarpetIRQ3Yback + 1
+
+										ldy #134
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+
+										lda #174
+										sta raster
+										ldx #<SpriteCarpetIRQ4
+										ldy #>SpriteCarpetIRQ4
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQ3Aback:					lda #$ff
+SpriteCarpetIRQ3Xback:				    ldx #$ff
+SpriteCarpetIRQ3Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ4:						sta SpriteCarpetIRQ4Aback + 1
+										stx SpriteCarpetIRQ4Xback + 1
+										sty SpriteCarpetIRQ4Yback + 1
+
+										ldy #176
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+
+										lda #216
+										sta raster
+										ldx #<SpriteCarpetIRQ5
+										ldy #>SpriteCarpetIRQ5
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQ4Aback:					lda #$ff
+SpriteCarpetIRQ4Xback:				    ldx #$ff
+SpriteCarpetIRQ4Yback:				    ldy #$ff
+										rti										
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
+										stx SpriteCarpetIRQ5Xback + 1
+										sty SpriteCarpetIRQ5Yback + 1
+
+										dec border
+										ldy #218
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+										inc border 
+
+										lda #$2f
+										sta raster
+										ldx #<SpriteCarpetIRQ
+										ldy #>SpriteCarpetIRQ
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteCarpetIRQ5Aback:					lda #$ff
+SpriteCarpetIRQ5Xback:				    ldx #$ff
+SpriteCarpetIRQ5Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetYplot:
+										sty sprite0y	
+										sty sprite1y	
+										sty sprite2y	
+										sty sprite3y	
+										sty sprite4y	
+										sty sprite5y	
+										sty sprite6y	
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetXplot:						lda #24
+										sta sprite0x
+										clc
+										adc #48
+										sta sprite1x 
+										clc
+										adc #48
+										sta sprite2x
+										clc
+										adc #48
+										sta sprite3x
+										clc
+										adc #48
+										sta sprite4x
+										clc
+										adc #48
+										sta sprite5x
+										clc
+										adc #48
+										sta sprite6x
+
+										lda #%11100000
+										ora $d010
+										sta $d010
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SetCarpetSprites:						ldx #$0d00/64				// set sprite memory pointers for main logo sprites
+										stx 2040
+										stx 2041
+										stx 2042
+										stx 2043
+										stx 2044
+										stx 2045
+										stx 2046
+
+										// set sprite screen position for main logo
+
+										ldy #40				// 78
+										sty sprite0y	    // sprite 0 y pos
+										sty sprite1y	    // sprite 1 y pos
+										sty sprite2y	    // sprite 2 y pos
+										sty sprite3y	    // sprite 2 y pos
+										sty sprite4y	    // sprite 2 y pos
+										sty sprite5y	    // sprite 2 y pos
+										sty sprite6y	    // sprite 2 y pos
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 sinusCounter:							.byte $00
 SpriteColor:							.byte DARK_GRAY
 FlashDelay:								.byte $00
 FlashCounter:							.byte $00
 
-										*=$c00
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										*=$0c00
 										.memblock "sprite sinus"
 SinusTable:								
 										.byte $68,$69,$69,$6A,$6B,$6B,$6C,$6C,$6D,$6E,$6E,$6F,$70,$70,$71,$71,$72,$73,$73,$74,$74,$75,$75,$76,$76,$77,$77,$78
@@ -311,32 +550,36 @@ SinusTable:
 										.byte $56,$56,$57,$57,$58,$58,$59,$59,$5A,$5A,$5B,$5B,$5C,$5C,$5D,$5D,$5E,$5F,$5F,$60,$60,$61,$62,$62,$63,$64,$64,$65
 										.byte $65,$66,$67,$67
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										*=$0d00
+										.memblock "carpet sprites"
+										.fill 120, $ff					// test sprite borg cube
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										*=$0e00
 										.memblock "style is inmate sprites"
-										// .import binary "gfx\text_sprites_6x1.bin"
-.byte $00,$00,$00,$00,$00,$00,$00,$00,$0c,$00,$00,$1c,$00,$00,$18,$03
-.byte $f0,$18,$07,$f8,$30,$0e,$38,$30,$0c,$03,$ff,$0e,$07,$f8,$07,$c0
-.byte $60,$00,$e0,$e0,$00,$70,$c0,$30,$70,$c0,$39,$e1,$80,$3f,$c3,$81
-.byte $1f,$03,$03,$00,$03,$36,$00,$00,$3e,$00,$00,$3c,$00,$00,$00,$00
-.byte $00,$00,$00,$00,$06,$00,$00,$06,$00,$00,$0e,$00,$30,$0c,$00,$71
-.byte $9c,$78,$73,$9c,$fc,$67,$19,$ce,$67,$39,$86,$6e,$73,$8c,$6c,$73
-.byte $38,$78,$e3,$e0,$70,$e3,$80,$e1,$c3,$0c,$c1,$c3,$9c,$83,$81,$f8
-.byte $03,$00,$f0,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-.byte $00,$00,$00,$00,$00,$00,$00,$10,$00,$00,$78,$00,$00,$20,$00,$00
-.byte $03,$c0,$00,$cf,$f0,$01,$dc,$70,$01,$98,$00,$01,$9c,$00,$03,$0f
-.byte $80,$03,$03,$c0,$07,$00,$c0,$06,$60,$c0,$06,$71,$c0,$00,$7f,$80
-.byte $00,$3e,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-.byte $00,$00,$00,$00,$00,$00,$02,$00,$00,$0f,$00,$00,$04,$00,$00,$00
-.byte $00,$00,$0c,$5c,$37,$1c,$7e,$3f,$18,$ee,$79,$38,$c6,$71,$31,$cc
-.byte $73,$71,$8c,$e3,$63,$1c,$e7,$e3,$19,$c7,$c2,$19,$c7,$00,$11,$00
-.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$e0,$00
-.byte $03,$f0,$8f,$07,$30,$df,$80,$30,$f3,$80,$73,$e7,$0f,$ef,$c7,$3c
-.byte $60,$ce,$70,$e1,$8e,$61,$c1,$0c,$61,$c1,$1c,$7f,$83,$1c,$1f,$83
-.byte $18,$00,$03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-.byte $00,$00,$00,$00,$00,$00,$18,$00,$00,$30,$00,$00,$30,$00,$00,$30
-.byte $38,$00,$70,$fc,$00,$61,$c6,$00,$fd,$86,$00,$f3,$1c,$00,$c3,$78
-.byte $00,$c3,$e0,$00,$83,$86,$00,$83,$0e,$00,$01,$fc,$00,$00,$f0,$00
+										.byte $00,$00,$00,$00,$00,$00,$00,$00,$0c,$00,$00,$1c,$00,$00,$18,$03
+										.byte $f0,$18,$07,$f8,$30,$0e,$38,$30,$0c,$03,$ff,$0e,$07,$f8,$07,$c0
+										.byte $60,$00,$e0,$e0,$00,$70,$c0,$30,$70,$c0,$39,$e1,$80,$3f,$c3,$81
+										.byte $1f,$03,$03,$00,$03,$36,$00,$00,$3e,$00,$00,$3c,$00,$00,$00,$00
+										.byte $00,$00,$00,$00,$06,$00,$00,$06,$00,$00,$0e,$00,$30,$0c,$00,$71
+										.byte $9c,$78,$73,$9c,$fc,$67,$19,$ce,$67,$39,$86,$6e,$73,$8c,$6c,$73
+										.byte $38,$78,$e3,$e0,$70,$e3,$80,$e1,$c3,$0c,$c1,$c3,$9c,$83,$81,$f8
+										.byte $03,$00,$f0,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+										.byte $00,$00,$00,$00,$00,$00,$00,$10,$00,$00,$78,$00,$00,$20,$00,$00
+										.byte $03,$c0,$00,$cf,$f0,$01,$dc,$70,$01,$98,$00,$01,$9c,$00,$03,$0f
+										.byte $80,$03,$03,$c0,$07,$00,$c0,$06,$60,$c0,$06,$71,$c0,$00,$7f,$80
+										.byte $00,$3e,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+										.byte $00,$00,$00,$00,$00,$00,$02,$00,$00,$0f,$00,$00,$04,$00,$00,$00
+										.byte $00,$00,$0c,$5c,$37,$1c,$7e,$3f,$18,$ee,$79,$38,$c6,$71,$31,$cc
+										.byte $73,$71,$8c,$e3,$63,$1c,$e7,$e3,$19,$c7,$c2,$19,$c7,$00,$11,$00
+										.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+										.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$e0,$00
+										.byte $03,$f0,$8f,$07,$30,$df,$80,$30,$f3,$80,$73,$e7,$0f,$ef,$c7,$3c
+										.byte $60,$ce,$70,$e1,$8e,$61,$c1,$0c,$61,$c1,$1c,$7f,$83,$1c,$1f,$83
+										.byte $18,$00,$03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+										.byte $00,$00,$00,$00,$00,$00,$18,$00,$00,$30,$00,$00,$30,$00,$00,$30
+										.byte $38,$00,$70,$fc,$00,$61,$c6,$00,$fd,$86,$00,$f3,$1c,$00,$c3,$78
+										.byte $00,$c3,$e0,$00,$83,$86,$00,$83,$0e,$00,$01,$fc,$00,$00,$f0,$00
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
