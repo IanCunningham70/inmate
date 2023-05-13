@@ -1,42 +1,23 @@
-SpriteCarpetIRQ:						sta SpriteCarpetIRQAback + 1
-										stx SpriteCarpetIRQXback + 1
-										sty SpriteCarpetIRQYback + 1
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
+										stx SpriteCarpetIRQ5Xback + 1
+										sty SpriteCarpetIRQ5Yback + 1
 
+										dec border
+										ldy #176
+										jsr SpriteCarpetYplot
+										jsr SpriteCarpetXplot
+										inc border 
 
-										lda #24
-										sta sprite0x
-										clc
-										adc #48
-										sta sprite1x 
-										clc
-										adc #48
-										sta sprite2x
-										clc
-										adc #48
-										sta sprite3x
-										clc
-										adc #48
-										sta sprite4x
-										clc
-										adc #48
-										sta sprite5x
-										clc
-										adc #48
-										sta sprite6x
-
-										lda #%11100000
-										ora $d010
-										sta $d010
-
-
-										lda #$00
+										lda #90
 										sta raster
-										ldx #<SpriteCarpetIRQ
-										ldy #>SpriteCarpetIRQ
+										ldx #<SpriteCarpetIRQ5
+										ldy #>SpriteCarpetIRQ5
 										stx $fffe
 										sty $ffff
 										inc irqflag
-SpriteCarpetIRQAback:					lda #$ff
-SpriteCarpetIRQXback:				    ldx #$ff
-SpriteCarpetIRQYback:				    ldy #$ff
+SpriteCarpetIRQ5Aback:					lda #$ff
+SpriteCarpetIRQ5Xback:				    ldx #$ff
+SpriteCarpetIRQ5Yback:				    ldy #$ff
 										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
