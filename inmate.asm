@@ -28,9 +28,8 @@ BasicUpstart2(start)
 
 // this is where the code stuff starts 
 
-										*= $080d "Main Code"
-start:		
-
+										*= $5000 "Main Code"
+start:
 										lda #$35
 										sta $01
 
@@ -41,8 +40,14 @@ start:
 										sta $d41f
 										jsr music.init
 										
-										//  Final IRQ pointers
 										sei
+										lda #$7f
+										sta $dc0d
+										sta $dd0d
+										lda $dc0d
+										lda $dd0d
+										lda #$ff
+										sta irqflag
 										lda #$81
 										sta irqenable
 										lda #$1b
@@ -125,7 +130,6 @@ IrqShowBitmap:							sta IrqShowBitmapAback + 1
 										jsr SinusMovement
 									
 										jsr FlashSprites
-
 
 										lda #$f9
 										sta raster
@@ -238,7 +242,10 @@ setSprites:								lda #$00
 										sta spriteset				// sprite display enable
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SetLogoSprites:							ldx #$0e00/64				// set sprite memory pointers for main logo sprites
+SetLogoSprites:							
+										jsr setSprites
+
+										ldx #$0e00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
 										inx
 										stx 2041
@@ -332,6 +339,7 @@ SpriteCarpet:							jsr setSprites
 
 SpriteCarpetLoop:						jmp *
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetIRQ:						sta SpriteCarpetIRQAback + 1
 										stx SpriteCarpetIRQXback + 1
 										sty SpriteCarpetIRQYback + 1
@@ -364,7 +372,6 @@ SpriteCarpetIRQ1:						sta SpriteCarpetIRQ1Aback + 1
 
 										ldy #92
 										jsr SpriteCarpetYplot
-										jsr SpriteCarpetXplot
 
 										lda #120
 										sta raster
@@ -384,7 +391,6 @@ SpriteCarpetIRQ2:						sta SpriteCarpetIRQ2Aback + 1
 
 										ldy #92+42
 										jsr SpriteCarpetYplot
-										jsr SpriteCarpetXplot
 
 										lda #160
 										sta raster
@@ -404,7 +410,6 @@ SpriteCarpetIRQ3:						sta SpriteCarpetIRQ3Aback + 1
 
 										ldy #134
 										jsr SpriteCarpetYplot
-										jsr SpriteCarpetXplot
 
 										lda #174
 										sta raster
@@ -424,7 +429,6 @@ SpriteCarpetIRQ4:						sta SpriteCarpetIRQ4Aback + 1
 
 										ldy #176
 										jsr SpriteCarpetYplot
-										jsr SpriteCarpetXplot
 
 										lda #216
 										sta raster
@@ -444,11 +448,8 @@ SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
 										stx SpriteCarpetIRQ5Xback + 1
 										sty SpriteCarpetIRQ5Yback + 1
 
-										dec border
 										ldy #218
 										jsr SpriteCarpetYplot
-										jsr SpriteCarpetXplot
-										inc border 
 
 										lda #$2f
 										sta raster
@@ -472,6 +473,7 @@ SpriteCarpetYplot:
 										sty sprite4y	
 										sty sprite5y	
 										sty sprite6y	
+										sty sprite7y	
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetXplot:						lda #24
@@ -500,7 +502,8 @@ SpriteCarpetXplot:						lda #24
 										sta $d010
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SetCarpetSprites:						ldx #$0d00/64				// set sprite memory pointers for main logo sprites
+SetCarpetSprites:						
+										ldx #$0d00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
 										stx 2041
 										stx 2042
@@ -521,7 +524,9 @@ SetCarpetSprites:						ldx #$0d00/64				// set sprite memory pointers for main l
 										sty sprite6y	    // sprite 2 y pos
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteCarpetFadePointers:
 
+.byte $0900/64
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -534,9 +539,8 @@ FlashCounter:							.byte $00
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+										.align $100
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										*=$0c00
 										.memblock "sprite sinus"
 SinusTable:								
 										.byte $68,$69,$69,$6A,$6B,$6B,$6C,$6C,$6D,$6E,$6E,$6F,$70,$70,$71,$71,$72,$73,$73,$74,$74,$75,$75,$76,$76,$77,$77,$78
