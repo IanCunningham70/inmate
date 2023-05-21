@@ -25,16 +25,19 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										* = $0801 "basic line"
 BasicUpstart2(start)
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// this is where the code stuff starts 
 
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										*= $5000 "Main Code"
 start:
 										lda #$35
 										sta $01
 
+										lda border
+										sta SpriteCarpetColor
 										jsr SpriteCarpet
-
 									
 										lda #00
 										sta $d41f
@@ -295,12 +298,10 @@ SetLogoSprites:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "sprite carpet - basic fader"
 
-// cover the whole screen with x & y expanded sprites
-// make each ona a differant color for testing
-//
-// animate them when routine is working.
 
-SpriteCarpet:							jsr setSprites
+SpriteCarpet:							
+
+										jsr setSprites
 
 										sei
 										lda #$7f
@@ -344,13 +345,22 @@ SpriteCarpetIRQ:						sta SpriteCarpetIRQAback + 1
 										stx SpriteCarpetIRQXback + 1
 										sty SpriteCarpetIRQYback + 1
 
+										ldx SpriteCarpetFadePointers	// set sprite memory pointers for main logo sprites
+										stx 2040
+										stx 2041
+										stx 2042
+										stx 2043
+										stx 2044
+										stx 2045
+										stx 2046
+
 										ldy #50				// top left hand corner of the screen
 										jsr SpriteCarpetYplot
 										jsr SpriteCarpetXplot
 
 										ldy #07
-				!:						tya
-										sta spritecolors,y 
+										lda SpriteCarpetColor
+								!:		sta spritecolors,y 
 										dey
 										bpl !-
 
@@ -440,9 +450,7 @@ SpriteCarpetIRQ4:						sta SpriteCarpetIRQ4Aback + 1
 SpriteCarpetIRQ4Aback:					lda #$ff
 SpriteCarpetIRQ4Xback:				    ldx #$ff
 SpriteCarpetIRQ4Yback:				    ldy #$ff
-										rti										
-
-
+										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
 										stx SpriteCarpetIRQ5Xback + 1
@@ -450,6 +458,8 @@ SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
 
 										ldy #218
 										jsr SpriteCarpetYplot
+
+										jsr SpriteWiper
 
 										lda #$2f
 										sta raster
@@ -463,7 +473,23 @@ SpriteCarpetIRQ5Xback:				    ldx #$ff
 SpriteCarpetIRQ5Yback:				    ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteWiper:
+										lda SpriteWipeAnimDelay
+										sec
+										sbc #$06
+										and #$07
+										sta SpriteWipeAnimDelay
+										bcc SpriteWiper2
+										rts
+SpriteWiper2:							ldx SpriteWipeAnimCounter
+										cpx #10
+										beq !+
 
+										lda SpriteWipeAnimPointers,x
+										sta SpriteCarpetFadePointers										
+										inc SpriteWipeAnimCounter
+								!:
+										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetYplot:
 										sty sprite0y	
@@ -503,14 +529,6 @@ SpriteCarpetXplot:						lda #24
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SetCarpetSprites:						
-										ldx #$0d00/64				// set sprite memory pointers for main logo sprites
-										stx 2040
-										stx 2041
-										stx 2042
-										stx 2043
-										stx 2044
-										stx 2045
-										stx 2046
 
 										// set sprite screen position for main logo
 
@@ -526,7 +544,9 @@ SetCarpetSprites:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetFadePointers:
 
-.byte $0900/64
+										.byte WipeSprite0/64
+SpriteCarpetColor:
+										.byte $00						// match the border color
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -540,7 +560,7 @@ FlashCounter:							.byte $00
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 										.align $100
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 										.memblock "sprite sinus"
 SinusTable:								
 										.byte $68,$69,$69,$6A,$6B,$6B,$6C,$6C,$6D,$6E,$6E,$6F,$70,$70,$71,$71,$72,$73,$73,$74,$74,$75,$75,$76,$76,$77,$77,$78
@@ -553,10 +573,90 @@ SinusTable:
 										.byte $4E,$4E,$4E,$4E,$4E,$4F,$4F,$4F,$4F,$4F,$50,$50,$50,$50,$50,$51,$51,$51,$52,$52,$52,$53,$53,$54,$54,$54,$55,$55
 										.byte $56,$56,$57,$57,$58,$58,$59,$59,$5A,$5A,$5B,$5B,$5C,$5C,$5D,$5D,$5E,$5F,$5F,$60,$60,$61,$62,$62,$63,$64,$64,$65
 										.byte $65,$66,$67,$67
+
+
+
+										.align $100
+
+SpriteWipeAnimDelay:					.byte $00
+SpriteWipeAnimCounter:					.byte $00										
+
+SpriteWipeAnimPointers:					.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,WipeSprite4/64,WipeSprite5/64
+										.byte WipeSprite6/64,WipeSprite7/64,WipeSprite8/64,WipeSprite9/64,WipeSprite0/64
+										
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										*=$0d00
-										.memblock "carpet sprites"
-										.fill 120, $ff					// test sprite borg cube
+*=$0840 "Wipe Sprites"
+
+WipeSprite0:
+
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$0f
+
+WipeSprite1:
+
+.byte $c0,$00,$00,$80,$00,$00,$00,$00,$01,$00,$00,$03,$00,$00,$07,$e0
+.byte $00,$00,$c0,$00,$00,$80,$00,$00,$00,$00,$01,$00,$00,$03,$00,$00
+.byte $07,$e0,$00,$00,$c0,$00,$00,$80,$00,$00,$00,$00,$01,$00,$00,$03
+.byte $00,$00,$07,$e0,$00,$00,$c0,$00,$00,$80,$00,$00,$00,$00,$01,$0e
+
+WipeSprite2:
+
+.byte $f0,$00,$00,$e0,$00,$00,$00,$00,$0f,$00,$00,$1f,$00,$00,$3f,$f8
+.byte $00,$00,$f0,$00,$00,$e0,$00,$00,$00,$00,$0f,$00,$00,$1f,$00,$00
+.byte $3f,$f8,$00,$00,$f0,$00,$00,$e0,$00,$00,$00,$00,$0f,$00,$00,$1f
+.byte $00,$00,$3f,$f8,$00,$00,$f0,$00,$00,$e0,$00,$00,$00,$00,$0f,$0e
+
+WipeSprite3:
+
+.byte $fe,$00,$00,$fc,$00,$00,$00,$00,$3f,$00,$00,$7f,$00,$00,$ff,$ff
+.byte $00,$00,$fe,$00,$00,$fc,$00,$00,$00,$00,$3f,$00,$00,$7f,$00,$00
+.byte $ff,$ff,$00,$00,$fe,$00,$00,$fc,$00,$00,$00,$00,$3f,$00,$00,$7f
+.byte $00,$00,$ff,$ff,$00,$00,$fe,$00,$00,$fc,$00,$00,$00,$00,$3f,$0e
+
+WipeSprite4:
+
+.byte $ff,$80,$00,$ff,$00,$00,$00,$00,$ff,$00,$01,$ff,$00,$03,$ff,$ff
+.byte $c0,$00,$ff,$80,$00,$ff,$00,$00,$00,$00,$ff,$00,$01,$ff,$00,$03
+.byte $ff,$ff,$c0,$00,$ff,$80,$00,$ff,$00,$00,$00,$00,$ff,$00,$01,$ff
+.byte $00,$03,$ff,$ff,$c0,$00,$ff,$80,$00,$ff,$00,$00,$00,$00,$ff,$0e
+
+WipeSprite5:
+
+.byte $ff,$f0,$00,$ff,$e0,$00,$00,$07,$ff,$00,$0f,$ff,$00,$1f,$ff,$ff
+.byte $f8,$00,$ff,$f0,$00,$ff,$e0,$00,$00,$07,$ff,$00,$0f,$ff,$00,$1f
+.byte $ff,$ff,$f8,$00,$ff,$f0,$00,$ff,$e0,$00,$00,$07,$ff,$00,$0f,$ff
+.byte $00,$1f,$ff,$ff,$f8,$00,$ff,$f0,$00,$ff,$e0,$00,$00,$07,$ff,$0e
+
+WipeSprite6:
+
+.byte $ff,$fe,$00,$ff,$fc,$00,$00,$3f,$ff,$00,$7f,$ff,$00,$ff,$ff,$ff
+.byte $ff,$00,$ff,$fe,$00,$ff,$fc,$00,$00,$3f,$ff,$00,$7f,$ff,$00,$ff
+.byte $ff,$ff,$ff,$00,$ff,$fe,$00,$ff,$fc,$00,$00,$3f,$ff,$00,$7f,$ff
+.byte $00,$ff,$ff,$ff,$ff,$00,$ff,$fe,$00,$ff,$fc,$00,$00,$3f,$ff,$0e
+
+WipeSprite7:
+
+.byte $ff,$ff,$80,$ff,$ff,$00,$00,$ff,$ff,$01,$ff,$ff,$03,$ff,$ff,$ff
+.byte $ff,$c0,$ff,$ff,$80,$ff,$ff,$00,$00,$ff,$ff,$01,$ff,$ff,$03,$ff
+.byte $ff,$ff,$ff,$c0,$ff,$ff,$80,$ff,$ff,$00,$00,$ff,$ff,$01,$ff,$ff
+.byte $03,$ff,$ff,$ff,$ff,$c0,$ff,$ff,$80,$ff,$ff,$00,$00,$ff,$ff,$0e
+
+WipeSprite8:
+
+.byte $ff,$ff,$f0,$ff,$ff,$e0,$0f,$ff,$ff,$1f,$ff,$ff,$3f,$ff,$ff,$ff
+.byte $ff,$f8,$ff,$ff,$f0,$ff,$ff,$e0,$0f,$ff,$ff,$1f,$ff,$ff,$3f,$ff
+.byte $ff,$ff,$ff,$f8,$ff,$ff,$f0,$ff,$ff,$e0,$0f,$ff,$ff,$1f,$ff,$ff
+.byte $3f,$ff,$ff,$ff,$ff,$f8,$ff,$ff,$f0,$ff,$ff,$e0,$0f,$ff,$ff,$0e
+
+WipeSprite9:
+
+.byte $ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$0e
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										*=$0e00
