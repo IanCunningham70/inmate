@@ -18,6 +18,20 @@
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+//Slammer's example, but adapted by Cruzer
+.var spriteData = $3000
+.pc = spriteData "spriteData"
+.var spritePic = LoadPicture("gfx\bars.png", List().add($000000,$ffffff,$6c6c6c,$959595))
+.for (var i=0; i<8; i++)
+	:getSprite(spritePic, i)
+
+.macro getSprite(spritePic, spriteNo) {
+	.for (var y=0; y<21; y++)
+		.for (var x=0; x<3; x++)
+			.byte spritePic.getMulticolorByte(x + spriteNo * 3, y) 
+	.byte 0
+}
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 .var music = LoadSid("sids\SnoopyDrePac.sid")
 .pc = music.location "Music"
