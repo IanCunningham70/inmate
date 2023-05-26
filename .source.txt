@@ -4,6 +4,7 @@
 // idea and gfx : Goerp
 // code : Case
 // music : TLF
+// sprites : CUPID
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -18,10 +19,9 @@
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 //Slammer's example, but adapted by Cruzer
-.var spriteData = $3000
-.pc = spriteData "spriteData"
+.var spriteBarsData = $0b00
+.pc = spriteBarsData "spriteBarsData"
 .var spritePic = LoadPicture("gfx\bars.png", List().add($000000,$ffffff,$6c6c6c,$959595))
 .for (var i=0; i<8; i++)
 	:getSprite(spritePic, i)
@@ -32,6 +32,7 @@
 			.byte spritePic.getMulticolorByte(x + spriteNo * 3, y) 
 	.byte 0
 }
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 .var music = LoadSid("sids\SnoopyDrePac.sid")
 .pc = music.location "Music"
@@ -39,12 +40,8 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										* = $0801 "basic line"
 BasicUpstart2(start)
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-										*= $5000 "Main Code"
+										* = $5000 "Main Code"
 start:
 										lda #$35
 										sta $01
@@ -52,6 +49,12 @@ start:
 										lda border
 										sta SpriteCarpetColor
 										jsr SpriteCarpet
+
+										// fade to black
+										// transfer picture
+										// new bars sprite carpet
+										// pause for a while and remove bars
+										// continue.
 									
 										lda #00
 										sta $d41f
@@ -311,10 +314,7 @@ SetLogoSprites:
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "sprite carpet - basic fader"
-
-
 SpriteCarpet:							
-
 										jsr setSprites
 
 										sei
@@ -325,35 +325,138 @@ SpriteCarpet:
 										lda $dd0d
 										lda #$1b
 										sta screenmode
-									
 										lda #$ff
 										sta irqflag
 										lda #$81
 										sta irqenable
-
 										lda #$2f
 										sta raster
 										ldx #<SpriteCarpetIRQ
 										ldy #>SpriteCarpetIRQ
 										stx $fffe
 										sty $ffff
-
 										cli
 
 										jsr SetCarpetSprites
 										jsr SpriteCarpetXplot
 
-										lda #$00
+										lda #%00000000
 										sta spritemulti   			// sprites multi-color mode select
 										sta spritermsb				// sprites 0-7 msb of x coordinate
 										sta spritepr 				// sprite to background display priority
-										lda #%11111111
+										lda #%01111111
 										sta spriteexpy    			// sprites expand 2x vertical (y)
 										sta spriteexpx    			// sprites expand 2x horizontal (x)
 										sta spriteset				// sprite display enable
 
-SpriteCarpetLoop:						jmp *
+SpriteCarpetLoop:						jmp SpriteCarpetLoop		// wait until the basic fade carpet is complete
 
+										jsr pauseLoop
+
+// fade to black
+										sei
+										lda #$0b
+										sta screenmode
+										lda #$ff
+										sta irqflag
+										lda #$81
+										sta irqenable
+										lda #$01
+										sta raster
+										ldx #<FadeIRQ
+										ldy #>FadeIRQ
+										stx $fffe
+										sty $ffff
+										cli
+
+
+BlackPause:								jmp BlackPause				// wait until everything is black
+
+
+										jsr pauseLoop
+
+										rts
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+FadeIRQ:								sta FadeIRQAback + 1
+										stx FadeIRQXback + 1
+										sty FadeIRQYback + 1
+
+fade_color:								lda #$00
+										sta screen
+										sta border
+
+fader_black:							jsr fade2black
+
+										lda #$01
+										sta raster
+										ldx #<FadeIRQ
+										ldy #>FadeIRQ
+										stx $fffe
+										sty $ffff
+										inc irqflag
+FadeIRQAback:							lda #$ff
+FadeIRQXback:				    		ldx #$ff
+FadeIRQYback:				    		ldy #$ff
+										rti
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+fade2black:								lda fade2delay
+										sec
+										sbc #$03
+										and #$07
+										sta fade2delay
+										bcc !+
+										rts
+								!:		ldx fade2count
+										cpx fade2max
+										beq !+
+										lda fade2black_table,x
+										sta fade_color+1
+										inc fade2count
+										rts
+							!:			lda #$ad
+										sta fader_black
+										sta BlackPause
+										rts
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+fade2delay:								.byte $00
+fade2count:								.byte $00
+fade2max:								.byte 12
+fade2black_table:						.byte $b,$b,$9,$9,$0,$0,$0,$0,$0,$0,$0,$0		// from dark grey to black
+										.byte $ff,$ff
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+pauseQuick:				ldy #128
+				!:		ldx #128
+					!:	dex
+						bne !-
+						dey
+						bne !--
+						rts
+                        //------------------------------------------------------------------------------
+                        // 1/4 standard pause
+						//------------------------------------------------------------------------------
+pauseLines:				ldy #64
+				!:		ldx #128
+					!:	dex
+						bne !-
+						dey
+						bne !--
+						rts
+                        //------------------------------------------------------------------------------
+                        // standard pause
+						//------------------------------------------------------------------------------
+pauseLoop:              ldx #255
+			            ldy #255
+                !:      dey
+                        bne !-
+                        dex
+                        bne pauseLoop+2
+                        rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 SpriteCarpetIRQ:						sta SpriteCarpetIRQAback + 1
 										stx SpriteCarpetIRQXback + 1
@@ -472,7 +575,6 @@ SpriteCarpetIRQ5:						sta SpriteCarpetIRQ5Aback + 1
 
 										ldy #218
 										jsr SpriteCarpetYplot
-
 										jsr SpriteWiper
 
 										lda #$2f
@@ -487,10 +589,9 @@ SpriteCarpetIRQ5Xback:				    ldx #$ff
 SpriteCarpetIRQ5Yback:				    ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SpriteWiper:
-										lda SpriteWipeAnimDelay
+SpriteWiper:							lda SpriteWipeAnimDelay
 										sec
-										sbc #$06
+										sbc #$02
 										and #$07
 										sta SpriteWipeAnimDelay
 										bcc SpriteWiper2
@@ -498,15 +599,16 @@ SpriteWiper:
 SpriteWiper2:							ldx SpriteWipeAnimCounter
 										cpx #10
 										beq !+
-
 										lda SpriteWipeAnimPointers,x
 										sta SpriteCarpetFadePointers										
 										inc SpriteWipeAnimCounter
-								!:
+										rts
+
+								!:		lda #$ad
+										sta SpriteCarpetLoop
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SpriteCarpetYplot:
-										sty sprite0y	
+SpriteCarpetYplot:						sty sprite0y	
 										sty sprite1y	
 										sty sprite2y	
 										sty sprite3y	
@@ -542,11 +644,7 @@ SpriteCarpetXplot:						lda #24
 										sta $d010
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SetCarpetSprites:						
-
-										// set sprite screen position for main logo
-
-										ldy #40				// 78
+SetCarpetSprites:						ldy #40				// 78
 										sty sprite0y	    // sprite 0 y pos
 										sty sprite1y	    // sprite 1 y pos
 										sty sprite2y	    // sprite 2 y pos
@@ -556,23 +654,43 @@ SetCarpetSprites:
 										sty sprite6y	    // sprite 2 y pos
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SpriteCarpetFadePointers:
-
-										.byte WipeSprite0/64
-SpriteCarpetColor:
-										.byte $00						// match the border color
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.align $100
+										.memblock "sprite pointers"
+
 sinusCounter:							.byte $00
 SpriteColor:							.byte DARK_GRAY
 FlashDelay:								.byte $00
 FlashCounter:							.byte $00
 
+SpriteCarpetColor:						.byte $00						// match the border color
+SpriteCarpetFadePointers:				.byte $00
+
+										// pointers for the basic fade sprites
+SpriteWipeAnimDelay:					.byte $00
+SpriteWipeAnimCounter:					.byte $00										
+SpriteWipeAnimOffset:					.byte $00			// sprite offset, column 1, 2, 3 etc.
+SpriteWipeAnimPointers:					.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,WipeSprite4/64,WipeSprite5/64
+										.byte WipeSprite6/64,WipeSprite7/64,WipeSprite8/64,WipeSprite9/64,WipeSprite0/64
+										
+
+										// pointers for the jail bar sprites
+SpriteBarsAnimDelay:					.byte $00
+SpriteBarsAnimCounter:					.byte $00										
+SpriteBarsAnimPointers:					.byte spriteBarsData/64
+										.byte spriteBarsData/64+1
+										.byte spriteBarsData/64+2
+										.byte spriteBarsData/64+3
+										.byte spriteBarsData/64+4
+										.byte spriteBarsData/64+5
+										.byte spriteBarsData/64+6
+										.byte spriteBarsData/64+7
+
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 										.align $100
 
 										.memblock "sprite sinus"
@@ -587,17 +705,6 @@ SinusTable:
 										.byte $4E,$4E,$4E,$4E,$4E,$4F,$4F,$4F,$4F,$4F,$50,$50,$50,$50,$50,$51,$51,$51,$52,$52,$52,$53,$53,$54,$54,$54,$55,$55
 										.byte $56,$56,$57,$57,$58,$58,$59,$59,$5A,$5A,$5B,$5B,$5C,$5C,$5D,$5D,$5E,$5F,$5F,$60,$60,$61,$62,$62,$63,$64,$64,$65
 										.byte $65,$66,$67,$67
-
-
-
-										.align $100
-
-SpriteWipeAnimDelay:					.byte $00
-SpriteWipeAnimCounter:					.byte $00										
-
-SpriteWipeAnimPointers:					.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,WipeSprite4/64,WipeSprite5/64
-										.byte WipeSprite6/64,WipeSprite7/64,WipeSprite8/64,WipeSprite9/64,WipeSprite0/64
-										
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 *=$0840 "Wipe Sprites"
@@ -671,7 +778,6 @@ WipeSprite9:
 .byte $ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff,$ff,$ff
 .byte $ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff
 .byte $ff,$ff,$ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$0e
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										*=$0e00
 										.memblock "style is inmate sprites"
