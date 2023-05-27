@@ -12,28 +12,6 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.const ScreenMemory	= $0400							// new screen location
-.const ColourMemory = $d800							// colour ram never changes
-.var screen_data = $3f40
-.var colour_data = $4328
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//Slammer's example, but adapted by Cruzer
-.var spriteBarsData = $0b00
-.pc = spriteBarsData "spriteBarsData"
-.var spritePic = LoadPicture("gfx\bars.png", List().add($000000,$ffffff,$6c6c6c,$959595))
-.for (var i=0; i<8; i++)
-	:getSprite(spritePic, i)
-
-.macro getSprite(spritePic, spriteNo) {
-	.for (var y=0; y<21; y++)
-		.for (var x=0; x<3; x++)
-			.byte spritePic.getMulticolorByte(x + spriteNo * 3, y) 
-	.byte 0
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 .var music = LoadSid("sids\SnoopyDrePac.sid")
 .pc = music.location "Music"
 .fill music.size, music.getData(i)
@@ -687,15 +665,15 @@ SpriteBarsIRQ:							sta SpriteBarsIRQAback + 1
 										jsr SpriteBarsXplot
 
 										ldy #07
-										lda #DARK_GREY
+										lda #LIGHT_GREY
 								!:		sta spritecolors,y 
 										dey
 										bpl !-
 
-										lda #WHITE
-										sta spritemcol1
-										lda #BLACK
+										lda #DARK_GREY
 										sta spritemcol0
+										lda #GREY
+										sta spritemcol1
 
 										lda #90
 										sta raster
@@ -884,14 +862,7 @@ SpriteWipeAnimPointers:					.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,W
 										// pointers for the jail bar sprites
 SpriteBarsAnimDelay:					.byte $00
 SpriteBarsAnimCounter:					.byte $00										
-SpriteBarsAnimPointers:					.byte spriteBarsData/64
-										.byte spriteBarsData/64+1
-										.byte spriteBarsData/64+2
-										.byte spriteBarsData/64+3
-										.byte spriteBarsData/64+4
-										.byte spriteBarsData/64+5
-										.byte spriteBarsData/64+6
-										.byte spriteBarsData/64+7
+SpriteBarsAnimPointers:					.byte barSprite0/64,barSprite1/64,barSprite2/64,barSprite3/64,barSprite4/64,barSprite5/64,barSprite6/64
 
 
 fade2delay:								.byte $00
@@ -987,7 +958,59 @@ WipeSprite9:
 .byte $ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff,$ff,$ff
 .byte $ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$7f,$ff,$ff
 .byte $ff,$ff,$ff,$ff,$ff,$fe,$ff,$ff,$fc,$ff,$ff,$f8,$3f,$ff,$ff,$0e
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*=$0b00 "jail bar Sprites"
+
+barSprite0:
+
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$0b
+
+barSprite1:
+
+.byte $7d,$00,$00,$5f,$fd,$00,$55,$ff,$fd,$55,$5d,$df,$55,$55,$77,$55
+.byte $55,$5f,$55,$55,$57,$55,$55,$57,$55,$55,$57,$55,$55,$57,$55,$55
+.byte $55,$55,$55,$57,$55,$55,$55,$55,$55,$57,$55,$55,$55,$55,$55,$55
+.byte $55,$55,$55,$55,$55,$55,$55,$55,$55,$55,$55,$00,$55,$00,$00,$85
+
+barSprite2:
+
+.byte $1d,$00,$00,$1f,$d0,$00,$15,$fd,$00,$15,$5f,$d0,$15,$57,$f4,$15
+.byte $57,$fc,$15,$55,$f4,$15,$57,$f4,$15,$55,$f4,$15,$55,$f4,$15,$55
+.byte $74,$15,$55,$f4,$15,$55,$74,$15,$55,$f4,$15,$55,$d4,$15,$55,$54
+.byte $15,$55,$50,$15,$55,$00,$15,$50,$00,$15,$00,$00,$15,$00,$00,$85
+
+barSprite3:
+
+.byte $05,$00,$00,$05,$00,$00,$05,$40,$00,$07,$d0,$00,$05,$f4,$00,$05
+.byte $f5,$00,$05,$fd,$40,$05,$f5,$40,$05,$7d,$40,$05,$fd,$40,$05,$7d
+.byte $40,$05,$fd,$40,$05,$7d,$40,$05,$7d,$40,$05,$7d,$40,$05,$5d,$00
+.byte $05,$74,$00,$05,$50,$00,$05,$40,$00,$05,$00,$00,$05,$00,$00,$85
+
+barSprite4:
+
+.byte $01,$40,$00,$01,$d0,$00,$01,$d0,$00,$01,$f4,$00,$01,$f4,$00,$01
+.byte $75,$00,$01,$f5,$00,$01,$75,$00,$01,$d5,$00,$01,$75,$00,$01,$d5
+.byte $00,$01,$55,$00,$01,$55,$00,$01,$d5,$00,$01,$55,$00,$01,$55,$00
+.byte $01,$54,$00,$01,$54,$00,$01,$50,$00,$01,$50,$00,$01,$40,$00,$85
+
+barSprite5:
+
+.byte $00,$15,$00,$00,$17,$00,$00,$15,$00,$00,$17,$00,$00,$17,$00,$00
+.byte $1f,$00,$00,$17,$00,$00,$1f,$00,$00,$1f,$00,$00,$1f,$00,$00,$1f
+.byte $00,$00,$17,$00,$00,$1f,$00,$00,$17,$00,$00,$17,$00,$00,$15,$00
+.byte $00,$17,$00,$00,$15,$00,$00,$15,$00,$00,$15,$00,$00,$15,$00,$85
+
+barSprite6:
+
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$85
+
+
 										*=$0e00
 										.memblock "style is inmate sprites"
 										.byte $00,$00,$00,$00,$00,$00,$00,$00,$0c,$00,$00,$1c,$00,$00,$18,$03
