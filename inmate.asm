@@ -424,8 +424,8 @@ fade2black:								lda fade2delay
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 fade2delay:								.byte $00
 fade2count:								.byte $00
-fade2max:								.byte 12
-fade2black_table:						.byte $b,$b,$9,$9,$0,$0,$0,$0,$0,$0,$0,$0		// from dark grey to black
+fade2max:								.byte 8
+fade2black_table:						.byte $04,$0a,$09,$02,$00,$00,$00,$00		// from light blue to black
 										.byte $ff,$ff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 pauseLoop:      				        ldx #255
@@ -639,7 +639,7 @@ SetCarpetSprites:						ldy #40				// 78
 										.memblock "sprite pointers"
 
 sinusCounter:							.byte $00
-SpriteColor:							.byte DARK_GRAY
+SpriteColor:							.byte $00						
 FlashDelay:								.byte $00
 FlashCounter:							.byte $00
 
@@ -692,7 +692,7 @@ WipeSprite0:
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
-.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$0f
+.byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$0e
 
 WipeSprite1:
 
