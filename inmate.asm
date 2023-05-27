@@ -385,6 +385,8 @@ BlackPause:								jmp BlackPause				// wait until everything is black
 
 SpriteBarsLoop:							jmp SpriteBarsLoop
 
+										jmp *
+
 										jsr pauseLoop
 										jsr pauseLoop
 										jsr pauseLoop
@@ -412,7 +414,6 @@ FadeIRQAback:							lda #$ff
 FadeIRQXback:				    		ldx #$ff
 FadeIRQYback:				    		ldy #$ff
 										rti
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 fade2black:								lda fade2delay
 										sec
@@ -432,7 +433,6 @@ fade2black:								lda fade2delay
 										sta fader_black
 										sta BlackPause
 										rts
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 pauseLoop:      				        ldx #255
 			    				        ldy #255
