@@ -82,27 +82,6 @@ start:
 										sty $ffff
 										cli
 
-// show artstudio bitmap
-										ldx #$00
-								!:      lda $3f40,x
-								        sta $0400,x
-								        lda $403f,x
-								        sta $04ff,x
-								        lda $413e,x
-								        sta $05fe,x
-								        lda $423d,x
-								        sta $06fd,x
-										
-								        lda $4338,x
-								        sta $d800,x
-								        lda $4437,x
-								        sta $d8ff,x
-								        lda $4536,x
-								        sta $d9fe,x
-								        lda $4635,x
-								        sta $dafd,x
-								        inx
-								        bne !-
 
 										jsr SetLogoSprites
 
@@ -369,15 +348,70 @@ SpriteCarpetLoop:						jmp SpriteCarpetLoop		// wait until the basic fade carpet
 										sty $ffff
 										cli
 
-
 BlackPause:								jmp BlackPause				// wait until everything is black
 
 
+// prison bars
+
+// show artstudio bitmap
+										ldx #$00
+								!:      lda $3f40,x
+								        sta $0400,x
+								        lda $403f,x
+								        sta $04ff,x
+								        lda $413e,x
+								        sta $05fe,x
+								        lda $423d,x
+								        sta $06fd,x
+										
+								        lda $4338,x
+								        sta $d800,x
+								        lda $4437,x
+								        sta $d8ff,x
+								        lda $4536,x
+								        sta $d9fe,x
+								        lda $4635,x
+								        sta $dafd,x
+								        inx
+								        bne !-
+										
+										jsr setSprites
+
+										lda SpriteBarsAnimPointers
+										sta SpriteCarpetFadePointers
+
+										sei
+										lda #$ff
+										sta irqflag
+										lda #$81
+										sta irqenable
+										lda #$01
+										sta raster
+										ldx #<SpriteBarsIRQ
+										ldy #>SpriteBarsIRQ
+										stx $fffe
+										sty $ffff
+										cli
+
+										jsr SetCarpetSprites
+										jsr SpriteCarpetXplot
+
+										lda #%00000000
+										sta spritermsb				// sprites 0-7 msb of x coordinate
+										sta spritepr 				// sprite to background display priority
+										lda #%01111111
+										sta spritemulti   			// sprites multi-color mode select
+										sta spriteexpy    			// sprites expand 2x vertical (y)
+										sta spriteexpx    			// sprites expand 2x horizontal (x)
+										sta spriteset				// sprite display enable
+
+SpriteBarsLoop:							jmp SpriteBarsLoop
+
+										jsr pauseLoop
+										jsr pauseLoop
 										jsr pauseLoop
 
 										rts
-
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 FadeIRQ:								sta FadeIRQAback + 1
 										stx FadeIRQXback + 1
@@ -404,7 +438,7 @@ FadeIRQYback:				    		ldy #$ff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 fade2black:								lda fade2delay
 										sec
-										sbc #$03
+										sbc #$04
 										and #$07
 										sta fade2delay
 										bcc !+
@@ -416,17 +450,11 @@ fade2black:								lda fade2delay
 										sta fade_color+1
 										inc fade2count
 										rts
-							!:			lda #$ad
+								!:		lda #$ad
 										sta fader_black
 										sta BlackPause
 										rts
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-fade2delay:								.byte $00
-fade2count:								.byte $00
-fade2max:								.byte 8
-fade2black_table:						.byte $04,$0a,$09,$02,$00,$00,$00,$00		// from light blue to black
-										.byte $ff,$ff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 pauseLoop:      				        ldx #255
 			    				        ldy #255
@@ -633,6 +661,205 @@ SetCarpetSprites:						ldy #40				// 78
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ:							sta SpriteBarsIRQAback + 1
+										stx SpriteBarsIRQXback + 1
+										sty SpriteBarsIRQYback + 1
+
+								        lda #$3b
+								        sta screenmode
+								        lda #24
+								        sta charset
+								        lda #200
+								        sta smoothpos
+
+										ldx SpriteCarpetFadePointers	// set sprite memory pointers for main logo sprites
+										stx 2040
+										stx 2041
+										stx 2042
+										stx 2043
+										stx 2044
+										stx 2045
+										stx 2046
+
+										ldy #50						// top left hand corner of the screen
+										jsr SpriteBarsYplot
+										jsr SpriteBarsXplot
+
+										ldy #07
+										lda #DARK_GREY
+								!:		sta spritecolors,y 
+										dey
+										bpl !-
+
+										lda #WHITE
+										sta spritemcol1
+										lda #BLACK
+										sta spritemcol0
+
+										lda #90
+										sta raster
+										ldx #<SpriteBarsIRQ1
+										ldy #>SpriteBarsIRQ1
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQAback:						lda #$ff
+SpriteBarsIRQXback:				    	ldx #$ff
+SpriteBarsIRQYback:				    	ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ1:							sta SpriteBarsIRQ1Aback + 1
+										stx SpriteBarsIRQ1Xback + 1
+										sty SpriteBarsIRQ1Yback + 1
+
+										ldy #92
+										jsr SpriteBarsYplot
+
+										lda #120
+										sta raster
+										ldx #<SpriteBarsIRQ2
+										ldy #>SpriteBarsIRQ2
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQ1Aback:					lda #$ff
+SpriteBarsIRQ1Xback:				    ldx #$ff
+SpriteBarsIRQ1Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ2:							sta SpriteBarsIRQ2Aback + 1
+										stx SpriteBarsIRQ2Xback + 1
+										sty SpriteBarsIRQ2Yback + 1
+
+										ldy #92+42
+										jsr SpriteBarsYplot
+
+										lda #160
+										sta raster
+										ldx #<SpriteBarsIRQ3
+										ldy #>SpriteBarsIRQ3
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQ2Aback:					lda #$ff
+SpriteBarsIRQ2Xback:				    ldx #$ff
+SpriteBarsIRQ2Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ3:							sta SpriteBarsIRQ3Aback + 1
+										stx SpriteBarsIRQ3Xback + 1
+										sty SpriteBarsIRQ3Yback + 1
+
+										ldy #134
+										jsr SpriteBarsYplot
+
+										lda #174
+										sta raster
+										ldx #<SpriteBarsIRQ4
+										ldy #>SpriteBarsIRQ4
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQ3Aback:					lda #$ff
+SpriteBarsIRQ3Xback:				    ldx #$ff
+SpriteBarsIRQ3Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ4:							sta SpriteBarsIRQ4Aback + 1
+										stx SpriteBarsIRQ4Xback + 1
+										sty SpriteBarsIRQ4Yback + 1
+
+										ldy #176
+										jsr SpriteBarsYplot
+
+										lda #216
+										sta raster
+										ldx #<SpriteBarsIRQ5
+										ldy #>SpriteBarsIRQ5
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQ4Aback:					lda #$ff
+SpriteBarsIRQ4Xback:				    ldx #$ff
+SpriteBarsIRQ4Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsIRQ5:							sta SpriteBarsIRQ5Aback + 1
+										stx SpriteBarsIRQ5Xback + 1
+										sty SpriteBarsIRQ5Yback + 1
+
+										ldy #218
+										jsr SpriteBarsYplot
+										jsr SpriteBarsWiper
+
+										lda #$2f
+										sta raster
+										ldx #<SpriteBarsIRQ
+										ldy #>SpriteBarsIRQ
+										stx $fffe
+										sty $ffff
+										inc irqflag
+SpriteBarsIRQ5Aback:					lda #$ff
+SpriteBarsIRQ5Xback:				    ldx #$ff
+SpriteBarsIRQ5Yback:				    ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsWiper:						lda SpriteBarsAnimDelay
+										sec
+										sbc #$02
+										and #$07
+										sta SpriteBarsAnimDelay
+										bcc SpriteBarsWiper2
+										rts
+SpriteBarsWiper2:						ldx SpriteBarsAnimCounter
+										cpx #6
+										beq !+
+										lda SpriteBarsAnimPointers,x
+										sta SpriteCarpetFadePointers										
+										inc SpriteBarsAnimCounter
+										rts
+
+								!:		lda #$ad
+										sta SpriteBarsLoop
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsYplot:						sty sprite0y	
+										sty sprite1y	
+										sty sprite2y	
+										sty sprite3y	
+										sty sprite4y	
+										sty sprite5y	
+										sty sprite6y	
+										sty sprite7y	
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteBarsXplot:						lda #24
+										sta sprite0x
+										clc
+										adc #48
+										sta sprite1x 
+										clc
+										adc #48
+										sta sprite2x
+										clc
+										adc #48
+										sta sprite3x
+										clc
+										adc #48
+										sta sprite4x
+										clc
+										adc #48
+										sta sprite5x
+										clc
+										adc #48
+										sta sprite6x
+
+										lda #%11100000
+										ora $d010
+										sta $d010
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100
@@ -667,8 +894,12 @@ SpriteBarsAnimPointers:					.byte spriteBarsData/64
 										.byte spriteBarsData/64+7
 
 
+fade2delay:								.byte $00
+fade2count:								.byte $00
+fade2max:								.byte 8
+fade2black_table:						.byte $04,$0a,$09,$02,$00,$00,$00,$00		// from light blue to black
+										.byte $ff,$ff
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100
 
 										.memblock "sprite sinus"
