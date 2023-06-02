@@ -60,7 +60,6 @@ start:
 										sty $ffff
 										cli
 
-
 										jsr SetLogoSprites
 
 inmate:									jmp inmate
@@ -209,18 +208,20 @@ FlashSprites:
 										sta FlashCounter
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-setSprites:								lda #$00
+setSprites:								lda #%00000000
 										sta spritemulti   			// sprites multi-color mode select
 										sta spritermsb				// sprites 0-7 msb of x coordinate
 										sta spritepr 				// sprite to background display priority
 										sta spriteexpy    			// sprites expand 2x vertical (y)
 										sta spriteexpx    			// sprites expand 2x horizontal (x)
-										lda #%11111111
+										lda #%01111111
 										sta spriteset				// sprite display enable
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SetLogoSprites:							
-										jsr setSprites
+SetLogoSprites:							jsr setSprites
+
+										lda #%01111111
+										sta spriteset				// sprite display enable
 
 										ldx #$0e00/64				// set sprite memory pointers for main logo sprites
 										stx 2040
@@ -377,20 +378,15 @@ BlackPause:								jmp BlackPause				// wait until everything is black
 										lda #%00000000
 										sta spritermsb				// sprites 0-7 msb of x coordinate
 										sta spritepr 				// sprite to background display priority
-										lda #%01111111
+										sta spriteexpx    			// sprites expand 2x horizontal (x)
+										lda #%11111111
 										sta spritemulti   			// sprites multi-color mode select
 										sta spriteexpy    			// sprites expand 2x vertical (y)
-										sta spriteexpx    			// sprites expand 2x horizontal (x)
 										sta spriteset				// sprite display enable
 
 SpriteBarsLoop:							jmp SpriteBarsLoop
 
-										jmp *
-
 										jsr pauseLoop
-										jsr pauseLoop
-										jsr pauseLoop
-
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 FadeIRQ:								sta FadeIRQAback + 1
@@ -832,6 +828,9 @@ SpriteBarsXplot:						lda #24
 										clc
 										adc #48
 										sta sprite6x
+										clc
+										adc #48
+										sta sprite7x
 
 										lda #%11100000
 										ora $d010
@@ -868,7 +867,9 @@ SpriteBarsAnimPointers:					.byte barSprite0/64,barSprite1/64,barSprite2/64,barS
 fade2delay:								.byte $00
 fade2count:								.byte $00
 fade2max:								.byte 8
-fade2black_table:						.byte $04,$0a,$09,$02,$00,$00,$00,$00		// from light blue to black
+fade2black_table:						.byte $04,$0a,$09,$02,$00,$00,$00,$00
+
+
 										.byte $ff,$ff
 
 										.align $100
