@@ -32,6 +32,8 @@ BasicUpstart2(start)
 start:		
 										SetBoth(BLACK)
 									
+										jsr $e544
+										
 										lda #00
 										sta $d41f
 										jsr music.init
@@ -76,6 +78,10 @@ IrqPlayMusic:							sta IrqPlayMusicAback + 1
 										ldx #$00
 								!:		lda $1700,x
 										sta $0400,x
+
+										
+
+
 										inx
 										bne !-
 

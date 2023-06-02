@@ -28,12 +28,9 @@ start:
 										sta SpriteCarpetColor
 										jsr SpriteCarpet
 
-										// fade to black
-										// transfer picture
-										// new bars sprite carpet
-										// pause for a while and remove bars
-										// continue.
-									
+										jsr pauseLoop
+										jsr pauseLoop
+
 										lda #00
 										sta $d41f
 										jsr music.init
@@ -61,6 +58,7 @@ start:
 										cli
 
 										jsr SetLogoSprites
+
 
 inmate:									jmp inmate
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
