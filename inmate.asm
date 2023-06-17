@@ -384,7 +384,7 @@ BlackPause:								jmp BlackPause				// wait until everything is black
 
 SpriteBarsLoop:							jmp SpriteBarsLoop
 
-//										jsr pauseLoop
+										jsr pauseLoop
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 FadeIRQ:								sta FadeIRQAback + 1
@@ -567,9 +567,16 @@ SpriteCarpetIRQ5Xback:				    ldx #$ff
 SpriteCarpetIRQ5Yback:				    ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-SpriteWiper:							lda SpriteWipeAnimDelay
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteWiper:							lda SpriteWipePause
+										beq !+
+										dec SpriteWipePause			
+										rts
+							!:			lda #1
+										sta SpriteWipePause										
+										lda SpriteWipeAnimDelay
 										sec
-										sbc #$02
+										sbc #$04
 										and #$07
 										sta SpriteWipeAnimDelay
 										bcc SpriteWiper2
@@ -836,6 +843,10 @@ SpriteBarsXplot:						lda #24
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100
 										.memblock "sprite pointers"
@@ -849,31 +860,19 @@ SpriteCarpetColor:						.byte $00						// match the border color
 SpriteCarpetFadePointers:				.byte $00
 
 										// pointers for the basic fade sprites
+SpriteWipePause:						.byte 1									
 SpriteWipeAnimDelay:					.byte $00
 SpriteWipeAnimCounter:					.byte $00										
 SpriteWipeAnimOffset:					.byte $00			// sprite offset, column 1, 2, 3 etc.
-SpriteWipeAnimPointers:					
-
-/*
-										.byte barSprite0/64
-										.byte barSprite1/64
-										.byte barSprite2/64
-										.byte barSprite3/64
-										.byte barSprite4/64
-										.byte barSprite5/64
-										.byte barSprite6/64
-*/
-
-
-										.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,WipeSprite4/64,WipeSprite5/64
+SpriteWipeAnimPointers:					.byte WipeSprite1/64,WipeSprite2/64,WipeSprite3/64,WipeSprite4/64,WipeSprite5/64
 										.byte WipeSprite6/64,WipeSprite7/64,WipeSprite8/64,WipeSprite9/64,WipeSprite0/64
 										
 
 										// pointers for the jail bar sprites
 SpriteBarsAnimDelay:					.byte $00
 SpriteBarsAnimCounter:					.byte $00										
-SpriteBarsAnimPointers:					
-										.byte barSprite0/64,barSprite1/64,barSprite2/64,barSprite3/64,barSprite4/64,barSprite5/64,barSprite6/64
+SpriteBarsAnimPointers:					.byte barSprite0/64,barSprite1/64,barSprite2/64,barSprite3/64,barSprite4/64,barSprite5/64,barSprite6/64
+
 
 fade2delay:								.byte $00
 fade2count:								.byte $00
